@@ -8,7 +8,7 @@ import {
   Send, Sparkles, AlertTriangle, CheckCircle, Download, RefreshCw 
 } from "lucide-react";
 
-const API_BASE = "http://localhost:8000/api";
+const API_BASE = "http://localhost:8001/api";
 
 const PIE_COLORS = ["#3b82f6", "#10b981", "#f59e0b", "#ec4899", "#8b5cf6", "#06b6d4"];
 
@@ -55,14 +55,25 @@ export default function App() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ question: q })
       });
-      const data = await res.json();
+      
+      let data;
+      try {
+        data = await res.json();
+      } catch (parseErr) {
+        throw new Error(`Server returned HTTP ${res.status} (${res.statusText}) with invalid response format.`);
+      }
+
+      if (!res.ok) {
+        throw new Error(data.detail || data.error || `Server responded with HTTP ${res.status}: ${res.statusText}`);
+      }
+
       if (!data.success) {
         setError(data.error || "Failed to execute query");
       } else {
         setResult(data);
       }
     } catch (err) {
-      setError(`API Connection Error: ${err.message}. Ensure backend is running on port 8000.`);
+      setError(err.message || "An unexpected error occurred while communicating with the analytics backend.");
     } finally {
       setLoading(false);
     }
