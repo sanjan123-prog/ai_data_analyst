@@ -1,0 +1,24 @@
+# Python & Environment
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+env/
+venv/
+*.egg-info/
+.ipynb_checkpoints/
+
+# Secrets & Credentials
+.env
+*.pem
+*.key
+
+# Machine Learning & Local Vector Stores
+*.joblib
+rag_vector_store.json
+
+# Node & Build Artfacts
+node_modules/
+dist/
+build/
