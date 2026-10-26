@@ -5,10 +5,12 @@ Supports validated, parameterized INSERT, UPDATE, DELETE with explicit previews 
 import os
 import re
 from typing import Dict, Any, List, Optional
-from sqlalchemy import URL, create_engine, text
+from sqlalchemy import text
 from dotenv import load_dotenv
 
 load_dotenv()
+
+from db_engine import get_db_engine
 
 class DatabaseSecurityError(Exception):
     pass
@@ -23,15 +25,7 @@ class CRUDAssistant:
     }
 
     def __init__(self):
-        mysql_url = URL.create(
-            drivername="mysql+pymysql",
-            username=os.getenv("MYSQL_USER"),
-            password=os.getenv("MYSQL_PASSWORD"),
-            host=os.getenv("MYSQL_HOST"),
-            port=int(os.getenv("MYSQL_PORT", 3306)),
-            database=os.getenv("MYSQL_DATABASE")
-        )
-        self.engine = create_engine(mysql_url)
+        self.engine = get_db_engine()
 
     def preview_create(self, table: str, record_data: Dict[str, Any]) -> Dict[str, Any]:
         """Validates and prepares an INSERT preview before execution."""

@@ -14,7 +14,7 @@ import pandas as pd
 import numpy as np
 from datetime import datetime
 from typing import Dict, Any, List, Optional
-from sqlalchemy import URL, create_engine, text
+from sqlalchemy import text
 from dotenv import load_dotenv
 
 from sklearn.model_selection import train_test_split
@@ -25,19 +25,13 @@ from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_sc
 
 load_dotenv()
 
+from db_engine import get_db_engine
+
 MODEL_FILE = os.path.join(os.path.dirname(__file__), "churn_model.joblib")
 
 class CustomerChurnPipeline:
     def __init__(self):
-        mysql_url = URL.create(
-            drivername="mysql+pymysql",
-            username=os.getenv("MYSQL_USER"),
-            password=os.getenv("MYSQL_PASSWORD"),
-            host=os.getenv("MYSQL_HOST"),
-            port=int(os.getenv("MYSQL_PORT", 3306)),
-            database=os.getenv("MYSQL_DATABASE")
-        )
-        self.engine = create_engine(mysql_url)
+        self.engine = get_db_engine()
         self.feature_names = [
             "prior_order_count",
             "prior_total_spend",

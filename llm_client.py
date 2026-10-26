@@ -14,8 +14,14 @@ load_dotenv()
 
 # We discovered that 'gemini-3.1-flash-lite' offers instant sub-second response times,
 # minimal token usage (50-60 tokens per request), and full availability on free keys.
-DEFAULT_GEMINI_MODEL = os.getenv("GEMINI_MODEL", "gemini-3.1-flash-lite")
+DEFAULT_GEMINI_MODEL = os.getenv("GEMINI_MODEL", "gemini-3.5-flash-lite")
 DEFAULT_OPENROUTER_MODEL = os.getenv("OPENROUTER_MODEL", "openrouter/free")
+FALLBACK_GEMINI_MODELS = [
+    DEFAULT_GEMINI_MODEL,
+    "gemini-3.5-flash-lite",
+    "gemini-3.1-flash-lite",
+    "gemini-flash-latest"
+]
 
 class LLMClient:
     def __init__(self):
@@ -34,7 +40,7 @@ class LLMClient:
             except Exception as e:
                 pass
 
-    def call_gemini_rest(self, prompt: str, max_tokens: int = 256, temperature: float = 0.0, timeout: int = 15) -> str:
+    def call_gemini_rest(self, prompt: str, max_tokens: int = 256, temperature: float = 0.0, timeout: int = 20, model: Optional[str] = None) -> str:
         """
         Direct REST call to Google's Developer API.
         Bypasses gRPC/SDK hang issues on Windows and provides instant execution.
@@ -42,7 +48,8 @@ class LLMClient:
         if not self.gemini_key:
             raise ValueError("GEMINI_API_KEY is missing from environment or .env.")
 
-        url = f"https://generativelanguage.googleapis.com/v1beta/models/{self.gemini_model}:generateContent?key={self.gemini_key}"
+        target_model = model or self.gemini_model
+        url = f"https://generativelanguage.googleapis.com/v1beta/models/{target_model}:generateContent?key={self.gemini_key}"
         
         payload = {
             "contents": [{"parts": [{"text": prompt}]}],
@@ -74,9 +81,9 @@ class LLMClient:
                 
         except urllib.error.HTTPError as e:
             err_body = e.read().decode("utf-8", errors="replace")
-            raise RuntimeError(f"Gemini HTTP Error {e.code}: {err_body}")
+            raise RuntimeError(f"Gemini HTTP Error {e.code} for {target_model}: {err_body}")
         except Exception as e:
-            raise RuntimeError(f"Gemini Request failed: {e}")
+            raise RuntimeError(f"Gemini Request failed for {target_model}: {e}")
 
     def call_openrouter(self, prompt: str, max_tokens: int = 256, temperature: float = 0.0) -> str:
         if not self.openrouter_client:
@@ -100,26 +107,34 @@ class LLMClient:
             prompt = str(prompt)
 
         last_err = None
+        
+        # Deduplicated model priority list
+        models_to_try = []
+        for m in FALLBACK_GEMINI_MODELS:
+            if m not in models_to_try:
+                models_to_try.append(m)
+
         for attempt in range(1, retries + 1):
-            try:
-                if self.gemini_key:
-                    return self.call_gemini_rest(prompt, max_tokens=max_tokens)
-                elif self.openrouter_client:
-                    return self.call_openrouter(prompt, max_tokens=max_tokens)
-                else:
-                    raise ValueError("No LLM key available. Please configure GEMINI_API_KEY in .env.")
-            except Exception as e:
-                last_err = e
-                err_msg = str(e).lower()
-                # If rate-limited on Gemini and OpenRouter is available, try fallback
-                if ("429" in err_msg or "resource_exhausted" in err_msg or "quota" in err_msg) and self.openrouter_client:
+            if self.gemini_key:
+                for model_candidate in models_to_try:
                     try:
-                        return self.call_openrouter(prompt, max_tokens=max_tokens)
-                    except Exception as fb_err:
-                        last_err = fb_err
-                
-                if attempt < retries:
-                    time.sleep(backoff ** attempt)
+                        return self.call_gemini_rest(prompt, max_tokens=max_tokens, model=model_candidate)
+                    except Exception as e:
+                        last_err = e
+                        # If service unavailable, rate limited, or model not found, try next candidate
+                        continue
+
+            if self.openrouter_client:
+                try:
+                    return self.call_openrouter(prompt, max_tokens=max_tokens)
+                except Exception as fb_err:
+                    last_err = fb_err
+            
+            if not self.gemini_key and not self.openrouter_client:
+                raise ValueError("No LLM key available. Please configure GEMINI_API_KEY in .env.")
+            
+            if attempt < retries:
+                time.sleep(backoff ** attempt)
         
         raise RuntimeError(f"All LLM generation attempts failed: {last_err}")
 

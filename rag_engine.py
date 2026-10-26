@@ -145,6 +145,19 @@ Answer:"""
                     self.documents_index = json.load(f)
             except Exception:
                 self.documents_index = []
+        
+        # Fallback: auto-index documents directory if index is empty
+        if not self.documents_index and self.api_key:
+            docs_dir = os.path.join(os.path.dirname(__file__), "documents")
+            if os.path.exists(docs_dir):
+                for fname in os.listdir(docs_dir):
+                    if fname.endswith(".md") or fname.endswith(".txt"):
+                        fpath = os.path.join(docs_dir, fname)
+                        try:
+                            with open(fpath, "r", encoding="utf-8") as f:
+                                self.ingest_document(fname, f.read())
+                        except Exception as e:
+                            print(f"[Warning] Auto-indexing {fname} failed: {e}")
 
 _rag_engine = None
 

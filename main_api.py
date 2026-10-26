@@ -24,6 +24,7 @@ from analytics_pipeline import answer_question
 from crud_engine import CRUDAssistant, DatabaseSecurityError
 from churn_pipeline import get_churn_pipeline
 from rag_engine import get_rag_engine
+from db_engine import get_db_dialect
 
 app = FastAPI(
     title="AI-Powered Data Analyst API",
@@ -73,12 +74,28 @@ class RAGUploadRequest(BaseModel):
     content: str
 
 # Endpoints
+@app.get("/")
+def root():
+    return {
+        "service": "AI-Powered Data Analyst Backend",
+        "status": "online",
+        "docs": "/docs",
+        "health": "/api/health"
+    }
+
 @app.get("/api/health")
 def health_check():
+    dialect = "unknown"
+    try:
+        dialect = get_db_dialect()
+    except Exception as e:
+        dialect = f"error: {e}"
+
     return {
         "status": "healthy",
         "service": "AI-Powered Data Analyst Backend",
         "gemini_active": bool(os.getenv("GEMINI_API_KEY")),
+        "db_dialect": dialect,
         "mysql_host": os.getenv("MYSQL_HOST")
     }
 

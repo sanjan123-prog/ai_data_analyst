@@ -10,10 +10,25 @@ import {
 } from "lucide-react";
 import confetti from "canvas-confetti";
 
-// Use environment variable for deployed production API, fallback to localhost:8001
-const API_BASE = import.meta.env.VITE_API_URL 
-  ? `${import.meta.env.VITE_API_URL.replace(/\/$/, '')}/api`
-  : "http://localhost:8001/api";
+// Dynamic API Base URL resolution:
+// 1. If VITE_API_URL is configured (in Vercel/Vite env), normalize and use it.
+// 2. If running on a deployed host (e.g. *.vercel.app) without an env var, default to the live Render backend.
+// 3. If running locally (localhost / 127.0.0.1), use the local development backend (port 8001).
+const getApiBase = () => {
+  const envUrl = import.meta.env.VITE_API_URL;
+  if (envUrl && typeof envUrl === "string" && envUrl.trim()) {
+    const cleaned = envUrl.trim().replace(/\/$/, "");
+    return cleaned.endsWith("/api") ? cleaned : `${cleaned}/api`;
+  }
+  
+  if (typeof window !== "undefined" && window.location.hostname !== "localhost" && window.location.hostname !== "127.0.0.1") {
+    return "https://ai-data-analyst-2fbh.onrender.com/api";
+  }
+
+  return "http://localhost:8001/api";
+};
+
+const API_BASE = getApiBase();
 
 const PALETTE = ["#06b6d4", "#6366f1", "#ec4899", "#10b981", "#f59e0b", "#8b5cf6", "#38bdf8"];
 
@@ -55,7 +70,7 @@ export default function App() {
   // Check Backend Live Status
   const checkHealth = async () => {
     try {
-      const res = await fetch(`${API_BASE}/health`, { signal: AbortSignal.timeout(3000) });
+      const res = await fetch(`${API_BASE}/health`, { signal: AbortSignal.timeout(8000) });
       if (res.ok) {
         setServerHealth({ online: true, checking: false });
       } else {
@@ -120,7 +135,11 @@ export default function App() {
         }
       }
     } catch (err) {
-      setError(err.message || `Could not connect to the analytics backend at ${API_BASE}.`);
+      const isNetworkFail = err.name === "TypeError" || err.message === "Failed to fetch";
+      const displayMsg = isNetworkFail 
+        ? `Failed to reach backend (${API_BASE}). If Render is waking from idle, please wait 30 seconds and retry.` 
+        : (err.message || `Could not connect to the analytics backend at ${API_BASE}.`);
+      setError(displayMsg);
     } finally {
       setLoading(false);
     }

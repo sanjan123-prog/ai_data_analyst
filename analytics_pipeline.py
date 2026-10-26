@@ -8,11 +8,12 @@ import os
 import re
 import time
 from typing import Dict, Any, List, Optional
-from sqlalchemy import URL, create_engine, text
+from sqlalchemy import text
 from dotenv import load_dotenv
 
 load_dotenv()
 
+from db_engine import get_db_engine
 from llm_client import call_llm
 from visualization_engine import clean_rows, recommend_visualization
 import sqlglot
@@ -20,15 +21,7 @@ from sqlglot import exp
 
 class AnalyticsPipeline:
     def __init__(self):
-        mysql_url = URL.create(
-            drivername="mysql+pymysql",
-            username=os.getenv("MYSQL_USER"),
-            password=os.getenv("MYSQL_PASSWORD"),
-            host=os.getenv("MYSQL_HOST"),
-            port=int(os.getenv("MYSQL_PORT", 3306)),
-            database=os.getenv("MYSQL_DATABASE")
-        )
-        self.engine = create_engine(mysql_url)
+        self.engine = get_db_engine()
         self._schema_cache = None
 
     def get_compact_schema(self) -> str:

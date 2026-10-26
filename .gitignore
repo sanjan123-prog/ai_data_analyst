@@ -14,11 +14,7 @@ venv/
 *.pem
 *.key
 
-# Machine Learning & Local Vector Stores
-*.joblib
-rag_vector_store.json
-
-# Node & Build Artfacts
+# Node & Build Artifacts
 node_modules/
 dist/
 build/
