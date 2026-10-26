@@ -10,7 +10,10 @@ import {
 } from "lucide-react";
 import confetti from "canvas-confetti";
 
-const API_BASE = "http://localhost:8001/api";
+// Use environment variable for deployed production API, fallback to localhost:8001
+const API_BASE = import.meta.env.VITE_API_URL 
+  ? `${import.meta.env.VITE_API_URL.replace(/\/$/, '')}/api`
+  : "http://localhost:8001/api";
 
 const PALETTE = ["#06b6d4", "#6366f1", "#ec4899", "#10b981", "#f59e0b", "#8b5cf6", "#38bdf8"];
 
@@ -117,7 +120,7 @@ export default function App() {
         }
       }
     } catch (err) {
-      setError(err.message || "Could not connect to the analytics backend on port 8001.");
+      setError(err.message || `Could not connect to the analytics backend at ${API_BASE}.`);
     } finally {
       setLoading(false);
     }
@@ -290,7 +293,7 @@ export default function App() {
             />
           </div>
           <div style={{ fontSize: "0.88rem", fontWeight: 600, color: "var(--text-primary)" }}>
-            {serverHealth.online ? "FastAPI Core Connected" : "Connecting to Port 8001..."}
+            {serverHealth.online ? "FastAPI Core Connected" : "Connecting to Backend..."}
           </div>
           <div style={{ fontSize: "0.75rem", color: "var(--text-secondary)", marginTop: "4px" }}>
             Gemini 3.1 Flash-Lite Active

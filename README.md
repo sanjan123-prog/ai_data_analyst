@@ -50,14 +50,43 @@ pip install -r requirements.txt
 
 ---
 
-## 2. Running the Production API Server
+## 2. Running the Application
 
-Start the FastAPI application:
+### 2.1 Backend Server
+Start the dedicated FastAPI application on port 8001:
 ```bash
-python -m uvicorn main_api:app --host 0.0.0.0 --port 8000 --reload
+python run_backend.py
 ```
+Or with uvicorn directly:
+```bash
+python -m uvicorn main_api:app --host 0.0.0.0 --port 8001 --reload
+```
+Interactive OpenAPI documentation is available at: `http://localhost:8001/docs`
 
-Interactive OpenAPI documentation is available at: `http://localhost:8000/docs`
+### 2.2 Frontend Application
+```bash
+cd frontend
+npm install
+npm run dev
+```
+The React interface runs on `http://localhost:5173`.
+
+---
+
+## 3. Deployment Guide (Vercel & Cloud)
+
+### Frontend Deployment on Vercel
+1. Push this repository to your GitHub account.
+2. Sign in to [Vercel](https://vercel.com) and click **"Add New Project"**.
+3. Import your GitHub repository.
+4. If prompted for project settings:
+   - **Framework Preset**: Vite
+   - **Root Directory**: `frontend` (or `./` using the included `vercel.json`)
+   - **Build Command**: `npm run build`
+   - **Output Directory**: `dist`
+5. Under **Environment Variables**, set:
+   - `VITE_API_URL`: The public URL of your backend API (e.g. `https://your-backend.onrender.com/api` or your cloud tunnel).
+6. Click **Deploy**.
 
 ---
 

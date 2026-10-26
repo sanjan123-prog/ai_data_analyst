@@ -1,0 +1,81 @@
+Test ID,Difficulty,Question,Success,SQL,Answer,Error,Time (seconds)
+1,Easy,How many customers are there?,True,SELECT COUNT(*) FROM `customers`;,User Safety: safe,,12.31
+2,Easy,How many orders are there in sales_order?,True,SELECT COUNT(*) FROM `sales_order`;,"There are 26,909 orders in the sales_order table.",,5.56
+3,Easy,What is the total sales amount?,False,,Unable to process the question.,LLM returned empty content. Finish reason: length. Try another model or increase the token limit.,12.97
+4,Easy,What is the average order quantity?,True,SELECT AVG(`Order Quantity`) FROM sales_order;,The average order quantity is **8.4497**.,,7.57
+5,Easy,What is the total sales amount for each channel?,True,"SELECT `Channel`, SUM(`Line Total`) AS `Total Sales Amount` FROM `sales_order` GROUP BY `Channel`;","Based on the database result, the total sales amounts for each channel are:
+
+- **Wholesale**: 280171126.19999933
+- **Distributor**: 162194022.0999997
+- **Export**: 75540463.20000024",,15.53
+6,Medium,What are the top 5 products by total sales?,False,,Unable to process the question.,LLM returned empty content. Finish reason: length. Try another model or increase the token limit.,15.41
+7,Medium,Which customer has the highest total sales?,False,,Unable to process the question.,LLM returned empty content. Finish reason: length. Try another model or increase the token limit.,14.04
+8,Medium,Show the 10 customers with the highest total sales.,False,,Unable to process the question.,LLM returned empty content. Finish reason: length. Try another model or increase the token limit.,15.61
+9,Medium,Which sales channel has the highest total revenue?,False,,Unable to process the question.,LLM returned empty content. Finish reason: length. Try another model or increase the token limit.,5.38
+10,Medium,Show the number of orders for each sales channel.,True,"SELECT `Channel`, COUNT(*) AS `Number of Orders` FROM sales_order GROUP BY `Channel`;",User Safety: safe,,9.3
+11,Medium,Which products have a total sales amount greater than 1000000?,False,,Unable to process the question.,LLM returned empty content. Finish reason: length. Try another model or increase the token limit.,6.8
+12,Medium,"What is the total profit for each channel, calculated as Line Total minus Total Unit Cost times Order Quantity?",True,"SELECT `Channel`, SUM(`Line Total` - `Total Unit Cost` * `Order Quantity`) AS `total_profit`
+FROM sales_order
+GROUP BY `Channel`;","- **Wholesale**: 104,032,932.18  
+- **Distributor**: 61,043,387.65  
+- **Export**: 28,748,025.67",,7.58
+13,Medium,Find the customers whose total sales exceed 100000.,False,,Unable to process the question.,LLM returned empty content. Finish reason: length. Try another model or increase the token limit.,15.22
+14,Medium,What is the highest and lowest unit price in sales_order?,True,"SELECT MIN(`Unit Price`) AS lowest_price, MAX(`Unit Price`) AS highest_price FROM sales_order;",The lowest unit price is 167.5 and the highest unit price is 6566.0.,,11.38
+15,Hard,"For each customer, calculate total sales and total order quantity, and return the top 5 customers by total sales.",False,,Unable to process the question.,LLM returned empty content. Finish reason: length. Try another model or increase the token limit.,19.32
+16,Hard,What percentage of total sales comes from each sales channel?,False,"SELECT 
+    cs.`Channel`,
+    SUM(cs.`Line Total`) AS total_sales,
+    (SUM(cs.`Line Total`) / ts.total) * 100 AS percentage
+FROM (","Invalid SQL syntax: Expected table name but got <Token token_type: TokenType.SENTINEL, text: SENTINEL, line: 1, col: 1, start: 0, end: 0, comments: []>. Line 5, Col: 6.
+  SUM(cs.`Line Total`) AS total_sales,
+    (SUM(cs.`Line Total`) / ts.total) * 100 AS percentage
+FROM [4m([0m","Invalid SQL syntax: Expected table name but got <Token token_type: TokenType.SENTINEL, text: SENTINEL, line: 1, col: 1, start: 0, end: 0, comments: []>. Line 5, Col: 6.
+  SUM(cs.`Line Total`) AS total_sales,
+    (SUM(cs.`Line Total`) / ts.total) * 100 AS percentage
+FROM [4m([0m",15.6
+17,Hard,Find products whose total sales are above the average total sales per product.,False,,Unable to process the question.,LLM returned empty content. Finish reason: length. Try another model or increase the token limit.,6.38
+18,Hard,Which customers have placed more orders than the average number of orders per customer?,False,"WITH `customer_orders` AS (
+    SELECT 
+        c.`Customer Index`,
+        c.`Customer Names`,
+        COUNT(so","Invalid SQL syntax: Expecting ). Line 5, Col: 16.
+  omer_orders` AS (
+    SELECT 
+        c.`Customer Index`,
+        c.`Customer Names`,
+        COUNT([4mso[0m","Invalid SQL syntax: Expecting ). Line 5, Col: 16.
+  omer_orders` AS (
+    SELECT 
+        c.`Customer Index`,
+        c.`Customer Names`,
+        COUNT([4mso[0m",31.46
+19,Hard,Rank sales channels from highest to lowest total sales and show each channel's percentage contribution to overall sales.,False,,Unable to process the question.,LLM returned empty content. Finish reason: length. Try another model or increase the token limit.,10.76
+20,Hard,Compare the total sales in sales_order with sales_orders_old and calculate the difference.,False,User Safety: safe,"Invalid SQL syntax: Invalid expression / Unexpected token. Line 1, Col: 12.
+  User Safety[4m:[0m safe","Invalid SQL syntax: Invalid expression / Unexpected token. Line 1, Col: 12.
+  User Safety[4m:[0m safe",3.42
+21,Challenge,"For each product, identify the customer who purchased the largest quantity of it.",True,"SELECT pr.`Product Name` AS Product, c.`Customer Names` AS Customer
+FROM (
+    SELECT so.`Product Description Index` AS prod_idx,
+           c.`Customer Index` AS cust_idx,
+           SUM(so.`Order Quantity`) AS total_qty
+    FROM `sales_order` so
+    JOIN `customers` c ON so.`Customer Name Index` = c.`Customer Index`
+    GROUP BY so.`Product Description Index`, c.`Customer Index`
+) t
+JOIN `products` pr ON t.prod_idx = pr.`Index`
+JOIN (
+    SELECT prod_idx,
+           MAX(total_qty) AS max_qty
+    FROM (
+        SELECT so.`Product Description Index` AS prod_idx,
+               SUM(so.`Order Quantity`) AS total_qty
+        FROM `sales_order` so
+        GROUP BY so.`Product Description Index`
+    ) s
+    GROUP BY prod_idx
+) m ON t.prod_idx = m.prod_idx AND t.total_qty = m.max_qty
+JOIN `customers` c ON t.cust_idx = c.`Customer Index`;",No matching records were found.,,55.62
+22,Challenge,Find customers whose total sales are greater than the average total sales across all customers.,False,,Unable to process the question.,"Error code: 429 - {'error': {'message': 'Rate limit exceeded: free-models-per-day. Add 10 credits to unlock 1000 free model requests per day', 'code': 429, 'metadata': {'headers': {'X-RateLimit-Limit': '50', 'X-RateLimit-Remaining': '0', 'X-RateLimit-Reset': '1791936000000'}, 'limit_source': 'openrouter_free_tier_daily', 'remedy_hint': 'Wait for the daily reset (see X-RateLimit-Reset), or purchase credits to raise your free-model daily limit.', 'provider_name': None, 'previous_errors': [{'code': 429, 'message': 'Rate limit exceeded: free-models-per-day. Add 10 credits to unlock 1000 free model requests per day'}, {'code': 429, 'message': 'Rate limit exceeded: free-models-per-day. Add 10 credits to unlock 1000 free model requests per day'}, {'code': 429, 'message': 'Rate limit exceeded: free-models-per-day. Add 10 credits to unlock 1000 free model requests per day'}, {'code': 429, 'message': 'Rate limit exceeded: free-models-per-day. Add 10 credits to unlock 1000 free model requests per day'}, {'code': 429, 'message': 'Rate limit exceeded: free-models-per-day. Add 10 credits to unlock 1000 free model requests per day'}, {'code': 429, 'message': 'Rate limit exceeded: free-models-per-day. Add 10 credits to unlock 1000 free model requests per day'}, {'code': 429, 'message': 'Rate limit exceeded: free-models-per-day. Add 10 credits to unlock 1000 free model requests per day'}, {'code': 429, 'message': 'Rate limit exceeded: free-models-per-day. Add 10 credits to unlock 1000 free model requests per day'}]}}, 'user_id': 'user_3KPUiM9uzxOOEyChyQk4KVN1FrI'}",1.71
+23,Challenge,Calculate monthly sales growth percentage compared with the previous month.,False,,Unable to process the question.,"Error code: 429 - {'error': {'message': 'Rate limit exceeded: free-models-per-day. Add 10 credits to unlock 1000 free model requests per day', 'code': 429, 'metadata': {'headers': {'X-RateLimit-Limit': '50', 'X-RateLimit-Remaining': '0', 'X-RateLimit-Reset': '1791936000000'}, 'limit_source': 'openrouter_free_tier_daily', 'remedy_hint': 'Wait for the daily reset (see X-RateLimit-Reset), or purchase credits to raise your free-model daily limit.', 'provider_name': None, 'previous_errors': [{'code': 429, 'message': 'Rate limit exceeded: free-models-per-day. Add 10 credits to unlock 1000 free model requests per day'}, {'code': 429, 'message': 'Rate limit exceeded: free-models-per-day. Add 10 credits to unlock 1000 free model requests per day'}, {'code': 429, 'message': 'Rate limit exceeded: free-models-per-day. Add 10 credits to unlock 1000 free model requests per day'}, {'code': 429, 'message': 'Rate limit exceeded: free-models-per-day. Add 10 credits to unlock 1000 free model requests per day'}, {'code': 429, 'message': 'Rate limit exceeded: free-models-per-day. Add 10 credits to unlock 1000 free model requests per day'}, {'code': 429, 'message': 'Rate limit exceeded: free-models-per-day. Add 10 credits to unlock 1000 free model requests per day'}, {'code': 429, 'message': 'Rate limit exceeded: free-models-per-day. Add 10 credits to unlock 1000 free model requests per day'}]}}, 'user_id': 'user_3KPUiM9uzxOOEyChyQk4KVN1FrI'}",1.8
+24,Challenge,Find the top 3 products by revenue within each sales channel.,False,,Unable to process the question.,"Error code: 429 - {'error': {'message': 'Rate limit exceeded: free-models-per-day. Add 10 credits to unlock 1000 free model requests per day', 'code': 429, 'metadata': {'headers': {'X-RateLimit-Limit': '50', 'X-RateLimit-Remaining': '0', 'X-RateLimit-Reset': '1791936000000'}, 'limit_source': 'openrouter_free_tier_daily', 'remedy_hint': 'Wait for the daily reset (see X-RateLimit-Reset), or purchase credits to raise your free-model daily limit.', 'provider_name': None, 'previous_errors': [{'code': 429, 'message': 'Rate limit exceeded: free-models-per-day. Add 10 credits to unlock 1000 free model requests per day'}, {'code': 429, 'message': 'Rate limit exceeded: free-models-per-day. Add 10 credits to unlock 1000 free model requests per day'}, {'code': 429, 'message': 'Rate limit exceeded: free-models-per-day. Add 10 credits to unlock 1000 free model requests per day'}, {'code': 429, 'message': 'Rate limit exceeded: free-models-per-day. Add 10 credits to unlock 1000 free model requests per day'}, {'code': 429, 'message': 'Rate limit exceeded: free-models-per-day. Add 10 credits to unlock 1000 free model requests per day'}, {'code': 429, 'message': 'Rate limit exceeded: free-models-per-day. Add 10 credits to unlock 1000 free model requests per day'}, {'code': 429, 'message': 'Rate limit exceeded: free-models-per-day. Add 10 credits to unlock 1000 free model requests per day'}, {'code': 429, 'message': 'Rate limit exceeded: free-models-per-day. Add 10 credits to unlock 1000 free model requests per day'}, {'code': 429, 'message': 'Rate limit exceeded: free-models-per-day. Add 10 credits to unlock 1000 free model requests per day'}]}}, 'user_id': 'user_3KPUiM9uzxOOEyChyQk4KVN1FrI'}",1.68
+25,Challenge,Are there any customers with no orders? Return their customer names.,False,,Unable to process the question.,"Error code: 429 - {'error': {'message': 'Rate limit exceeded: free-models-per-day. Add 10 credits to unlock 1000 free model requests per day', 'code': 429, 'metadata': {'headers': {'X-RateLimit-Limit': '50', 'X-RateLimit-Remaining': '0', 'X-RateLimit-Reset': '1791936000000'}, 'limit_source': 'openrouter_free_tier_daily', 'remedy_hint': 'Wait for the daily reset (see X-RateLimit-Reset), or purchase credits to raise your free-model daily limit.', 'provider_name': None, 'previous_errors': [{'code': 429, 'message': 'Rate limit exceeded: free-models-per-day. Add 10 credits to unlock 1000 free model requests per day'}, {'code': 429, 'message': 'Rate limit exceeded: free-models-per-day. Add 10 credits to unlock 1000 free model requests per day'}, {'code': 429, 'message': 'Rate limit exceeded: free-models-per-day. Add 10 credits to unlock 1000 free model requests per day'}, {'code': 429, 'message': 'Rate limit exceeded: free-models-per-day. Add 10 credits to unlock 1000 free model requests per day'}, {'code': 429, 'message': 'Rate limit exceeded: free-models-per-day. Add 10 credits to unlock 1000 free model requests per day'}, {'code': 429, 'message': 'Rate limit exceeded: free-models-per-day. Add 10 credits to unlock 1000 free model requests per day'}, {'code': 429, 'message': 'Rate limit exceeded: free-models-per-day. Add 10 credits to unlock 1000 free model requests per day'}, {'code': 429, 'message': 'Rate limit exceeded: free-models-per-day. Add 10 credits to unlock 1000 free model requests per day'}]}}, 'user_id': 'user_3KPUiM9uzxOOEyChyQk4KVN1FrI'}",2.01
