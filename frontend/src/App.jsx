@@ -237,7 +237,7 @@ export default function App() {
               <Sparkles size={20} />
             </div>
             <div>
-              <div className="brand-title">Antigravity AI</div>
+              <div className="brand-title">Data Analyst AI</div>
               <div className="brand-subtitle">Business Intelligence</div>
             </div>
           </div>
